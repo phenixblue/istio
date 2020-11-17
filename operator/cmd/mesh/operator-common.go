@@ -37,6 +37,8 @@ type operatorCommonArgs struct {
 	operatorNamespace string
 	// watchedNamespaces is the namespaces the operator controller watches, could be namespace list separated by comma.
 	watchedNamespaces string
+	// namespaceDiscoveryLabel specifies the label used to filter what namespaces the controller watches.
+	namespaceDiscoveryLabel string
 	// istioNamespace is deprecated, use watchedNamespaces instead.
 	istioNamespace string
 	// manifestsPath is a path to a charts and profiles directory in the local filesystem, or URL with a release tgz.
@@ -76,25 +78,28 @@ func renderOperatorManifest(_ *rootArgs, ocArgs *operatorCommonArgs) (string, st
 operatorNamespace: {{.OperatorNamespace}}
 istioNamespace: {{.IstioNamespace}}
 watchedNamespaces: {{.WatchedNamespaces}}
+namespaceDiscoveryLabel {{.namespaceDiscoveryLabel}}
 hub: {{.Hub}}
 tag: {{.Tag}}
 revision: {{if .Revision }} {{.Revision}} {{else}} "" {{end}}
 `
 
 	tv := struct {
-		OperatorNamespace string
-		IstioNamespace    string
-		WatchedNamespaces string
-		Hub               string
-		Tag               string
-		Revision          string
+		OperatorNamespace       string
+		IstioNamespace          string
+		WatchedNamespaces       string
+		NamespaceDiscoveryLabel string
+		Hub                     string
+		Tag                     string
+		Revision                string
 	}{
-		OperatorNamespace: ocArgs.operatorNamespace,
-		IstioNamespace:    ocArgs.istioNamespace,
-		WatchedNamespaces: ocArgs.watchedNamespaces,
-		Hub:               ocArgs.hub,
-		Tag:               ocArgs.tag,
-		Revision:          ocArgs.revision,
+		OperatorNamespace:       ocArgs.operatorNamespace,
+		IstioNamespace:          ocArgs.istioNamespace,
+		WatchedNamespaces:       ocArgs.watchedNamespaces,
+		NamespaceDiscoveryLabel: ocArgs.namespaceDiscoveryLabel,
+		Hub:                     ocArgs.hub,
+		Tag:                     ocArgs.tag,
+		Revision:                ocArgs.revision,
 	}
 	vals, err := util.RenderTemplate(tmpl, tv)
 	if err != nil {

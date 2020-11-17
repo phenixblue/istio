@@ -127,6 +127,8 @@ func init() {
 		"Directory to watch for updates to config yaml files. If specified, the files will be used as the source of config, rather than a CRD client.")
 	discoveryCmd.PersistentFlags().StringVarP(&serverArgs.RegistryOptions.KubeOptions.WatchedNamespaces, "appNamespace", "a", metav1.NamespaceAll,
 		"Specify the applications namespace list the controller manages, separated by comma; if not set, controller watches all namespaces")
+	discoveryCmd.PersistentFlags().StringVar(&serverArgs.RegistryOptions.KubeOptions.NamespaceDiscoveryLabel, "discoveryLabel", "",
+		"Specify the label used to filter namespaces for the controller to manage. This value overrides any value specified for appNamespaces")
 	discoveryCmd.PersistentFlags().DurationVar(&serverArgs.RegistryOptions.KubeOptions.ResyncPeriod, "resync", 60*time.Second,
 		"Controller resync interval")
 	discoveryCmd.PersistentFlags().StringVar(&serverArgs.RegistryOptions.KubeOptions.DomainSuffix, "domain", constants.DefaultKubernetesDomain,

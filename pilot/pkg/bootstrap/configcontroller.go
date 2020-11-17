@@ -223,6 +223,7 @@ func (s *Server) initInprocessAnalysisController(args *PilotArgs) error {
 	processingArgs := settings.DefaultArgs()
 	processingArgs.KubeConfig = args.RegistryOptions.KubeConfig
 	processingArgs.WatchedNamespaces = args.RegistryOptions.KubeOptions.WatchedNamespaces
+	processingArgs.NamespaceDiscoveryLabel = args.RegistryOptions.KubeOptions.NamespaceDiscoveryLabel
 	processingArgs.MeshConfigFile = args.MeshConfigFile
 	processingArgs.EnableConfigAnalysis = true
 

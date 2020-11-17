@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -35,6 +36,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
@@ -206,14 +208,6 @@ func NewServer(args *PilotArgs) (*Server, error) {
 		s.shutdownDuration = 10 * time.Second // If not specified set to 10 seconds.
 	}
 
-	if args.RegistryOptions.KubeOptions.WatchedNamespaces != "" {
-		// Add the control-plane namespace to the list of watched namespaces.
-		args.RegistryOptions.KubeOptions.WatchedNamespaces = fmt.Sprintf("%s,%s",
-			args.RegistryOptions.KubeOptions.WatchedNamespaces,
-			args.Namespace,
-		)
-	}
-
 	// used for both initKubeRegistry and initClusterRegistreis
 	if features.EnableEndpointSliceController {
 		args.RegistryOptions.KubeOptions.EndpointMode = kubecontroller.EndpointSliceOnly
@@ -245,6 +239,26 @@ func NewServer(args *PilotArgs) (*Server, error) {
 	}
 
 	s.initJwtPolicy()
+
+	if args.RegistryOptions.KubeOptions.NamespaceDiscoveryLabel != "" {
+		nsList, err := s.initWatchedNamespaces(args)
+		if err != nil {
+			return nil, fmt.Errorf("error discovering watch namespaces: %v", err)
+		}
+
+		if strings.Contains(nsList, args.Namespace) {
+			args.RegistryOptions.KubeOptions.WatchedNamespaces = nsList
+		} else {
+			args.RegistryOptions.KubeOptions.WatchedNamespaces = fmt.Sprintf("%s,%s", nsList, args.Namespace)
+		}
+
+	} else if args.RegistryOptions.KubeOptions.WatchedNamespaces != "" {
+		// Add the control-plane namespace to the list of watched namespaces.
+		args.RegistryOptions.KubeOptions.WatchedNamespaces = fmt.Sprintf("%s,%s",
+			args.RegistryOptions.KubeOptions.WatchedNamespaces,
+			args.Namespace,
+		)
+	}
 
 	// Options based on the current 'defaults' in istio.
 	caOpts := &caOptions{
@@ -1159,4 +1173,40 @@ func (s *Server) initMeshHandlers() {
 			Reason: []model.TriggerReason{model.GlobalUpdate},
 		})
 	})
+}
+
+// maybeCreateCA creates and initializes CA Key if needed.
+func (s *Server) initWatchedNamespaces(args *PilotArgs) (string, error) {
+
+	log.Info("looking up namespaces to use for discovery")
+	var (
+		err           error
+		corev1        v1.CoreV1Interface
+		namespaceList []string
+	)
+
+	if s.kubeClient != nil {
+		corev1 = s.kubeClient.CoreV1()
+
+	}
+
+	log.Info("just before weird line")
+
+	label := args.RegistryOptions.KubeOptions.NamespaceDiscoveryLabel
+
+	// Get a list of namespaces with target label
+	namespacesWithlabel, err := corev1.Namespaces().List(context.Background(), metav1.ListOptions{LabelSelector: label})
+
+	if err != nil {
+		return "", err
+	}
+
+	log.Info("just after weird line")
+
+	// Build a list of the namespaces to be returned
+	for _, namespace := range namespacesWithlabel.Items {
+		namespaceList = append(namespaceList, namespace.Name)
+	}
+
+	return strings.Join(namespaceList, ","), nil
 }

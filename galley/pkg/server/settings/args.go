@@ -39,6 +39,9 @@ type Args struct { // nolint:maligned
 	// List of namespaces watched, separated by comma; if not set, watch all namespaces.
 	WatchedNamespaces string
 
+	// Label to use to filter what namespace the controller watches
+	NamespaceDiscoveryLabel string
+
 	// resync period to be passed to the K8s machinery.
 	ResyncPeriod time.Duration
 
@@ -65,15 +68,16 @@ type Args struct { // nolint:maligned
 // DefaultArgs allocates an Args struct initialized with Galley's default configuration.
 func DefaultArgs() *Args {
 	return &Args{
-		ResyncPeriod:          0,
-		KubeConfig:            "",
-		WatchedNamespaces:     metav1.NamespaceAll,
-		MeshConfigFile:        defaultMeshConfigFile,
-		DomainSuffix:          constants.DefaultKubernetesDomain,
-		ExcludedResourceKinds: kuberesource.DefaultExcludedResourceKinds(),
-		EnableConfigAnalysis:  false,
-		Snapshots:             []string{snapshots.Default},
-		TriggerSnapshot:       snapshots.Default,
+		ResyncPeriod:            0,
+		KubeConfig:              "",
+		WatchedNamespaces:       metav1.NamespaceAll,
+		NamespaceDiscoveryLabel: "",
+		MeshConfigFile:          defaultMeshConfigFile,
+		DomainSuffix:            constants.DefaultKubernetesDomain,
+		ExcludedResourceKinds:   kuberesource.DefaultExcludedResourceKinds(),
+		EnableConfigAnalysis:    false,
+		Snapshots:               []string{snapshots.Default},
+		TriggerSnapshot:         snapshots.Default,
 	}
 }
 
@@ -83,6 +87,7 @@ func (a *Args) String() string {
 
 	_, _ = fmt.Fprintf(buf, "KubeConfig: %s\n", a.KubeConfig)
 	_, _ = fmt.Fprintf(buf, "WatchedNamespaces: %s\n", a.WatchedNamespaces)
+	_, _ = fmt.Fprintf(buf, "NamespaceDiscoveryLabel: %s\n", a.NamespaceDiscoveryLabel)
 	_, _ = fmt.Fprintf(buf, "ResyncPeriod: %v\n", a.ResyncPeriod)
 	_, _ = fmt.Fprintf(buf, "MeshConfigFile: %s\n", a.MeshConfigFile)
 	_, _ = fmt.Fprintf(buf, "DomainSuffix: %s\n", a.DomainSuffix)

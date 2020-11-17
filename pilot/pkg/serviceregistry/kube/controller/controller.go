@@ -106,8 +106,10 @@ type Options struct {
 
 	// Namespace the controller watches. If set to meta_v1.NamespaceAll (""), controller watches all namespaces
 	WatchedNamespaces string
-	ResyncPeriod      time.Duration
-	DomainSuffix      string
+	// NamespaceDiscoveryLabel specifies the label used to filter what namespaces the controller watches.
+	NamespaceDiscoveryLabel string
+	ResyncPeriod            time.Duration
+	DomainSuffix            string
 
 	// ClusterID identifies the remote cluster in a multicluster env.
 	ClusterID string
